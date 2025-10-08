@@ -78,12 +78,16 @@ export default function RoomsPage() {
     };
 
     const removeDuplicateRooms = (rooms: Room[]) => {
-        const seen = new Set();
+        const seenIds = new Set();
+        const seenNumbers = new Set();
         return rooms.filter(room => {
-            if (seen.has(room.number)) {
+            // Vérifier les doublons par ID et par numéro
+            if (seenIds.has(room.id) || seenNumbers.has(room.number)) {
+                console.warn(`Duplicate room found: ${room.number} (ID: ${room.id})`);
                 return false;
             }
-            seen.add(room.number);
+            seenIds.add(room.id);
+            seenNumbers.add(room.number);
             return true;
         });
     };
@@ -93,12 +97,16 @@ export default function RoomsPage() {
         try {
             const roomsData = await loadFromFirebase('rooms');
             if (!Array.isArray(roomsData) || roomsData.length === 0) {
+                // Nettoyer localStorage des doublons potentiels
+                localStorage.removeItem('rooms');
                 for (const room of predefinedRooms) {
                     await saveData('rooms', room);
                 }
                 setRooms(predefinedRooms);
             } else {
                 const uniqueRooms = removeDuplicateRooms(roomsData);
+                // Sauvegarder les données nettoyées
+                localStorage.setItem('rooms', JSON.stringify(uniqueRooms));
                 setRooms(Array.isArray(uniqueRooms) ? uniqueRooms : []);
             }
         } catch (error) {
@@ -106,7 +114,9 @@ export default function RoomsPage() {
             try {
                 const fallbackData = JSON.parse(localStorage.getItem('rooms') || '[]');
                 if (Array.isArray(fallbackData) && fallbackData.length > 0) {
-                    setRooms(fallbackData);
+                    const cleanedData = removeDuplicateRooms(fallbackData);
+                    localStorage.setItem('rooms', JSON.stringify(cleanedData));
+                    setRooms(cleanedData);
                 } else {
                     setRooms(predefinedRooms);
                 }
@@ -337,6 +347,20 @@ export default function RoomsPage() {
                             >
                                 Actualiser
                             </button>
+                            {(user?.role === 'admin' || user?.role === 'super_admin') && (
+                                <button 
+                                    onClick={() => {
+                                        const currentRooms = JSON.parse(localStorage.getItem('rooms') || '[]');
+                                        const cleanedRooms = removeDuplicateRooms(currentRooms);
+                                        localStorage.setItem('rooms', JSON.stringify(cleanedRooms));
+                                        setRooms(cleanedRooms);
+                                        showNotification(`${currentRooms.length - cleanedRooms.length} doublons supprimés`, 'success');
+                                    }}
+                                    className="px-3 sm:px-4 py-2 text-xs sm:text-sm bg-red-100 hover:bg-red-200 text-red-700 rounded-lg transition-colors"
+                                >
+                                    Nettoyer doublons
+                                </button>
+                            )}
                         </div>
                     </div>
                 </div>
@@ -391,10 +415,9 @@ export default function RoomsPage() {
                                             )}
                                             
                                             {/* Chambres existantes */}
-                                            {categoryRooms.map((room, index) => {
-                                                const uniqueKey = `${category}-${room.number}-${room.id}-${index}-${room.status}`;
+                                            {categoryRooms.map((room) => {
                                                 return (
-                                                    <div key={uniqueKey} className={`${categoryStyle.bgColor} p-4 sm:p-5 rounded-xl border border-slate-200 hover:shadow-lg transition-all duration-200 hover:border-slate-300 ${(user?.role === 'admin' || user?.role === 'super_admin') ? 'cursor-pointer' : ''} group`} onClick={(user?.role === 'admin' || user?.role === 'super_admin') ? () => handleEditRoom(room) : undefined}>
+                                                    <div key={room.id} className={`${categoryStyle.bgColor} p-4 sm:p-5 rounded-xl border border-slate-200 hover:shadow-lg transition-all duration-200 hover:border-slate-300 ${(user?.role === 'admin' || user?.role === 'super_admin') ? 'cursor-pointer' : ''} group`} onClick={(user?.role === 'admin' || user?.role === 'super_admin') ? () => handleEditRoom(room) : undefined}>
                                                         <div className="flex items-start justify-between mb-3 sm:mb-4">
                                                             <div className={`w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br ${categoryStyle.color} rounded-lg flex items-center justify-center`}>
                                                                 <svg className="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
