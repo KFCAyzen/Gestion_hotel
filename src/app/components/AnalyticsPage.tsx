@@ -49,31 +49,6 @@ const AnalyticsPage = () => {
         return () => { isMounted = false; };
     }, [selectedPeriod]);
 
-    const fetchAnalyticsData = useCallback(async () => {
-        setLoading(true);
-        try {
-            // Données depuis localStorage uniquement pour éviter Firebase
-            const rooms = JSON.parse(localStorage.getItem('rooms') || '[]');
-            const reservations = JSON.parse(localStorage.getItem('reservations') || '[]');
-            const bills = JSON.parse(localStorage.getItem('bills') || '[]');
-            
-            const analytics = calculateAnalytics(bills, reservations, rooms);
-            setAnalyticsData(analytics);
-        } catch (error) {
-            console.warn('Analytics error:', error);
-            // Fallback simple
-            setAnalyticsData({
-                revenue: { daily: 0, weekly: 0, monthly: 0, yearly: 0 },
-                occupancy: { current: 0, average: 0, trend: 0 },
-                clients: { total: 0, new: 0, returning: 0 },
-                rooms: { mostBooked: 'Standard', leastBooked: 'Suite', avgStay: 2.5 },
-                monthlyData: []
-            });
-        } finally {
-            setLoading(false);
-        }
-    }, [selectedPeriod, calculateAnalytics]);
-
     const calculateAnalytics = useCallback((billing: any[], reservations: any[], rooms: any[]): AnalyticsData => {
         const now = new Date();
         const today = now.toISOString().split('T')[0];
@@ -205,6 +180,31 @@ const AnalyticsPage = () => {
             monthlyData
         };
     }, []);
+
+    const fetchAnalyticsData = useCallback(async () => {
+        setLoading(true);
+        try {
+            // Données depuis localStorage uniquement pour éviter Firebase
+            const rooms = JSON.parse(localStorage.getItem('rooms') || '[]');
+            const reservations = JSON.parse(localStorage.getItem('reservations') || '[]');
+            const bills = JSON.parse(localStorage.getItem('bills') || '[]');
+            
+            const analytics = calculateAnalytics(bills, reservations, rooms);
+            setAnalyticsData(analytics);
+        } catch (error) {
+            console.warn('Analytics error:', error);
+            // Fallback simple
+            setAnalyticsData({
+                revenue: { daily: 0, weekly: 0, monthly: 0, yearly: 0 },
+                occupancy: { current: 0, average: 0, trend: 0 },
+                clients: { total: 0, new: 0, returning: 0 },
+                rooms: { mostBooked: 'Standard', leastBooked: 'Suite', avgStay: 2.5 },
+                monthlyData: []
+            });
+        } finally {
+            setLoading(false);
+        }
+    }, [selectedPeriod, calculateAnalytics]);
 
     const formatPrice = (amount: number) => {
         return new Intl.NumberFormat('fr-FR', {
