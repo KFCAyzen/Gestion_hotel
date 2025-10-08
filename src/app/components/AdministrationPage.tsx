@@ -42,10 +42,10 @@ const AdministrationPage = () => {
             case 'settings':
                 return (
                     <div className="bg-white p-6 rounded-xl border border-slate-200">
-                        <h3 className="text-lg font-semibold text-slate-800 mb-4">Paramètres de l'Établissement</h3>
+                        <h3 className="text-lg font-semibold text-slate-800 mb-4">Paramètres de l\'Établissement</h3>
                         <div className="space-y-4">
                             <div>
-                                <label className="block text-sm font-medium text-slate-700 mb-2">Nom de l'établissement</label>
+                                <label className="block text-sm font-medium text-slate-700 mb-2">Nom de l\'établissement</label>
                                 <input type="text" className="w-full px-3 py-2 border border-slate-300 rounded-lg" defaultValue="Mon Hôtel" />
                             </div>
                             <div>
@@ -193,7 +193,7 @@ const AdministrationPage = () => {
                     <h1 className="text-2xl font-bold text-slate-800">
                         {activeSection === 'users' && 'Gestion des Utilisateurs'}
                         {activeSection === 'analytics' && 'Rapports & Analytics'}
-                        {activeSection === 'settings' && 'Paramètres de l'Établissement'}
+                        {activeSection === 'settings' && 'Paramètres de l\'Établissement'}
                     </h1>
                 </div>
             )}
