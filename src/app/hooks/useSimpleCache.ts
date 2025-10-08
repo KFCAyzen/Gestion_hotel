@@ -1,44 +1,36 @@
-import { useMemo } from 'react';
+import { useState, useEffect } from 'react';
 
-// Hook simplifié pour le cache sans complexité
-export const useSimpleCache = () => {
-    return useMemo(() => ({
-        get: (key: string) => {
-            try {
-                const item = localStorage.getItem(`cache_${key}`);
-                if (!item) return null;
-                const parsed = JSON.parse(item);
-                if (parsed.expires && Date.now() > parsed.expires) {
-                    localStorage.removeItem(`cache_${key}`);
-                    return null;
-                }
-                return parsed.data;
-            } catch {
-                return null;
+// Cache simple pour petits établissements
+const cache = new Map<string, { data: any; timestamp: number; ttl: number }>();
+
+export const useSimpleCache = <T>(key: string, fetcher: () => T | Promise<T>, ttl = 300000) => {
+    const [data, setData] = useState<T | null>(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const loadData = async () => {
+            const cached = cache.get(key);
+            const now = Date.now();
+            
+            if (cached && now - cached.timestamp < cached.ttl) {
+                setData(cached.data);
+                setLoading(false);
+                return;
             }
-        },
-        set: (key: string, data: any, ttl: number = 5 * 60 * 1000) => {
+
             try {
-                const item = {
-                    data,
-                    expires: Date.now() + ttl
-                };
-                localStorage.setItem(`cache_${key}`, JSON.stringify(item));
-            } catch {
-                // Ignore cache errors
+                const result = await fetcher();
+                cache.set(key, { data: result, timestamp: now, ttl });
+                setData(result);
+            } catch (error) {
+                console.warn('Cache fetch error:', error);
+            } finally {
+                setLoading(false);
             }
-        },
-        clear: () => {
-            try {
-                const keys = Object.keys(localStorage);
-                keys.forEach(key => {
-                    if (key.startsWith('cache_')) {
-                        localStorage.removeItem(key);
-                    }
-                });
-            } catch {
-                // Ignore errors
-            }
-        }
-    }), []);
+        };
+
+        loadData();
+    }, [key, ttl]);
+
+    return { data, loading };
 };

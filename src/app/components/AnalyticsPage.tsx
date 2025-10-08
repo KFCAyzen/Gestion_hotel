@@ -1,12 +1,7 @@
 'use client';
 
 import { useState, useEffect, memo, useCallback } from 'react';
-import { collection, getDocs, query, where, orderBy, Timestamp } from 'firebase/firestore';
-import { db } from '../firebase';
 import LoadingSpinner from './LoadingSpinner';
-import { useRealTimeData } from '../hooks/useRealTimeData';
-import { useAdvancedPerformance } from '../hooks/useAdvancedPerformance';
-import { useStableData } from '../hooks/useStableData';
 
 interface AnalyticsData {
     revenue: {
@@ -42,9 +37,6 @@ const AnalyticsPage = () => {
     const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
     const [loading, setLoading] = useState(true);
     const [selectedPeriod, setSelectedPeriod] = useState('monthly');
-    const { stats } = useRealTimeData();
-    const { optimizeData, smartCache } = useAdvancedPerformance('AnalyticsPage');
-    const stableAnalyticsData = useStableData(analyticsData);
 
     useEffect(() => {
         let isMounted = true;
@@ -60,7 +52,7 @@ const AnalyticsPage = () => {
     const fetchAnalyticsData = useCallback(async () => {
         setLoading(true);
         try {
-            // Charger depuis localStorage
+            // Données depuis localStorage uniquement pour éviter Firebase
             const rooms = JSON.parse(localStorage.getItem('rooms') || '[]');
             const reservations = JSON.parse(localStorage.getItem('reservations') || '[]');
             const bills = JSON.parse(localStorage.getItem('bills') || '[]');
@@ -68,14 +60,19 @@ const AnalyticsPage = () => {
             const analytics = calculateAnalytics(bills, reservations, rooms);
             setAnalyticsData(analytics);
         } catch (error) {
-            console.error('Erreur lors du chargement des analytics:', error);
-            // Fallback avec données vides
-            const analytics = calculateAnalytics([], [], []);
-            setAnalyticsData(analytics);
+            console.warn('Analytics error:', error);
+            // Fallback simple
+            setAnalyticsData({
+                revenue: { daily: 0, weekly: 0, monthly: 0, yearly: 0 },
+                occupancy: { current: 0, average: 0, trend: 0 },
+                clients: { total: 0, new: 0, returning: 0 },
+                rooms: { mostBooked: 'Standard', leastBooked: 'Suite', avgStay: 2.5 },
+                monthlyData: []
+            });
         } finally {
             setLoading(false);
         }
-    }, [selectedPeriod]);
+    }, [selectedPeriod, calculateAnalytics]);
 
     const calculateAnalytics = useCallback((billing: any[], reservations: any[], rooms: any[]): AnalyticsData => {
         const now = new Date();
@@ -221,7 +218,7 @@ const AnalyticsPage = () => {
         return <LoadingSpinner />;
     }
 
-    if (!stableAnalyticsData) {
+    if (!analyticsData) {
         return <div className="p-6 text-center">Erreur lors du chargement des données</div>;
     }
 
@@ -248,14 +245,16 @@ const AnalyticsPage = () => {
                         <div>
                             <p className="text-sm text-slate-600">Revenus du mois</p>
                             <p className="text-2xl font-bold text-green-600">
-                                {formatPrice(stableAnalyticsData.revenue.monthly)}
+                                {formatPrice(analyticsData.revenue.monthly)}
                             </p>
                         </div>
                         <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
-                            <span className="text-green-600 text-xl">💰</span>
+                            <svg className="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1" />
+                            </svg>
                         </div>
                     </div>
-                    <p className="text-xs text-slate-500 mt-2">+{stableAnalyticsData.occupancy.trend > 0 ? '+' : ''}{stableAnalyticsData.occupancy.trend.toFixed(1)}% vs mois dernier</p>
+                    <p className="text-xs text-slate-500 mt-2">{analyticsData.occupancy.trend > 0 ? '+' : ''}{analyticsData.occupancy.trend.toFixed(1)}% vs mois dernier</p>
                 </div>
 
                 <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
@@ -263,14 +262,16 @@ const AnalyticsPage = () => {
                         <div>
                             <p className="text-sm text-slate-600">Taux d'occupation</p>
                             <p className="text-2xl font-bold text-blue-600">
-                                {stableAnalyticsData.occupancy.current.toFixed(1)}%
+                                {analyticsData.occupancy.current.toFixed(1)}%
                             </p>
                         </div>
                         <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
-                            <span className="text-blue-600 text-xl">🏨</span>
+                            <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                            </svg>
                         </div>
                     </div>
-                    <p className="text-xs text-slate-500 mt-2">Moyenne: {stableAnalyticsData.occupancy.average.toFixed(1)}%</p>
+                    <p className="text-xs text-slate-500 mt-2">Moyenne: {analyticsData.occupancy.average.toFixed(1)}%</p>
                 </div>
 
                 <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
@@ -278,14 +279,16 @@ const AnalyticsPage = () => {
                         <div>
                             <p className="text-sm text-slate-600">Total clients</p>
                             <p className="text-2xl font-bold text-purple-600">
-                                {stableAnalyticsData.clients.total}
+                                {analyticsData.clients.total}
                             </p>
                         </div>
                         <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
-                            <span className="text-purple-600 text-xl">👥</span>
+                            <svg className="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                            </svg>
                         </div>
                     </div>
-                    <p className="text-xs text-slate-500 mt-2">{stableAnalyticsData.clients.new} nouveaux clients</p>
+                    <p className="text-xs text-slate-500 mt-2">{analyticsData.clients.new} nouveaux clients</p>
                 </div>
 
                 <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
@@ -293,11 +296,13 @@ const AnalyticsPage = () => {
                         <div>
                             <p className="text-sm text-slate-600">Séjour moyen</p>
                             <p className="text-2xl font-bold text-orange-600">
-                                {stableAnalyticsData.rooms.avgStay} jours
+                                {analyticsData.rooms.avgStay} jours
                             </p>
                         </div>
                         <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
-                            <span className="text-orange-600 text-xl">📅</span>
+                            <svg className="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                            </svg>
                         </div>
                     </div>
                     <p className="text-xs text-slate-500 mt-2">Durée moyenne de séjour</p>
@@ -310,13 +315,13 @@ const AnalyticsPage = () => {
                 <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
                     <h3 className="text-lg font-semibold text-slate-800 mb-4">Évolution des Revenus</h3>
                     <div className="space-y-3">
-                        {stableAnalyticsData.monthlyData.slice(-6).map((data, index) => (
+                        {analyticsData.monthlyData.slice(-6).map((data, index) => (
                             <div key={`revenue-${data.month}-${index}`} className="flex items-center gap-3">
                                 <div className="w-8 text-xs text-slate-600">{data.month}</div>
                                 <div className="flex-1 bg-slate-200 rounded-full h-3">
                                     <div 
                                         className="bg-gradient-to-r from-green-500 to-green-600 h-3 rounded-full"
-                                        style={{width: `${Math.min((data.revenue / Math.max(...stableAnalyticsData.monthlyData.map(d => d.revenue))) * 100, 100)}%`}}
+                                        style={{width: `${Math.min((data.revenue / Math.max(...analyticsData.monthlyData.map(d => d.revenue))) * 100, 100)}%`}}
                                     ></div>
                                 </div>
                                 <div className="text-xs text-slate-700 font-medium w-20 text-right">
@@ -331,13 +336,13 @@ const AnalyticsPage = () => {
                 <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
                     <h3 className="text-lg font-semibold text-slate-800 mb-4">Réservations par Mois</h3>
                     <div className="space-y-3">
-                        {stableAnalyticsData.monthlyData.slice(-6).map((data, index) => (
+                        {analyticsData.monthlyData.slice(-6).map((data, index) => (
                             <div key={`bookings-${data.month}-${index}`} className="flex items-center gap-3">
                                 <div className="w-8 text-xs text-slate-600">{data.month}</div>
                                 <div className="flex-1 bg-slate-200 rounded-full h-3">
                                     <div 
                                         className="bg-gradient-to-r from-blue-500 to-blue-600 h-3 rounded-full"
-                                        style={{width: `${Math.min((data.bookings / Math.max(...stableAnalyticsData.monthlyData.map(d => d.bookings))) * 100, 100)}%`}}
+                                        style={{width: `${Math.min((data.bookings / Math.max(...analyticsData.monthlyData.map(d => d.bookings))) * 100, 100)}%`}}
                                     ></div>
                                 </div>
                                 <div className="text-xs text-slate-700 font-medium w-12 text-right">
