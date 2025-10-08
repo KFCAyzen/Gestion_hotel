@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
 import { advancedCache, dashboardCache, analyticsCache } from '../utils/advancedCache';
 import { dbIndexing, queryOptimizer } from '../utils/databaseIndexing';
 import { dataConsolidation } from '../utils/dataConsolidation';
@@ -159,7 +159,7 @@ export const useAdvancedPerformance = (componentName: string) => {
     }, [executeWorkerTask]);
 
     // Cache intelligent avec invalidation
-    const smartCache = useCallback({
+    const smartCache = useMemo(() => ({
         get: <T>(key: string, fallback?: T): T | null => {
             const cached = advancedCache.get<T>(key);
             return cached !== null ? cached : fallback || null;
@@ -180,7 +180,7 @@ export const useAdvancedPerformance = (componentName: string) => {
         ): Promise<T> => {
             return advancedCache.getOrSet(key, fetcher, ttl);
         }
-    }, []);
+    }), []);
 
     // Requêtes optimisées avec consolidation
     const optimizedQuery = useCallback(async (
