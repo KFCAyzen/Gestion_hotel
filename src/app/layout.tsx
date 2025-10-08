@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { AuthProvider } from "./context/AuthContext";
 import { ActivityLogProvider } from "./context/ActivityLogContext";
@@ -7,8 +7,6 @@ export const metadata: Metadata = {
   title: "PAULINA HÔTEL - Gestion",
   description: "Système de gestion hôtelière PAULINA HÔTEL",
   manifest: "/manifest.json",
-  themeColor: "#7D3837",
-  viewport: "width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
@@ -18,6 +16,14 @@ export const metadata: Metadata = {
     icon: "/favicon.ico",
     apple: "/icon-192x192.png"
   }
+};
+
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  themeColor: "#7D3837"
 };
 
 export default function RootLayout({

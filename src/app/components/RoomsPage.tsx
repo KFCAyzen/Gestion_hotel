@@ -392,8 +392,9 @@ export default function RoomsPage() {
                                             
                                             {/* Chambres existantes */}
                                             {categoryRooms.map((room, index) => {
+                                                const uniqueKey = `${category}-${room.number}-${room.id}-${index}-${room.status}`;
                                                 return (
-                                                    <div key={`room-${room.id}-${category}-${room.number}-${index}`} className={`${categoryStyle.bgColor} p-4 sm:p-5 rounded-xl border border-slate-200 hover:shadow-lg transition-all duration-200 hover:border-slate-300 ${(user?.role === 'admin' || user?.role === 'super_admin') ? 'cursor-pointer' : ''} group`} onClick={(user?.role === 'admin' || user?.role === 'super_admin') ? () => handleEditRoom(room) : undefined}>
+                                                    <div key={uniqueKey} className={`${categoryStyle.bgColor} p-4 sm:p-5 rounded-xl border border-slate-200 hover:shadow-lg transition-all duration-200 hover:border-slate-300 ${(user?.role === 'admin' || user?.role === 'super_admin') ? 'cursor-pointer' : ''} group`} onClick={(user?.role === 'admin' || user?.role === 'super_admin') ? () => handleEditRoom(room) : undefined}>
                                                         <div className="flex items-start justify-between mb-3 sm:mb-4">
                                                             <div className={`w-8 h-8 sm:w-10 sm:h-10 bg-gradient-to-br ${categoryStyle.color} rounded-lg flex items-center justify-center`}>
                                                                 <svg className="w-4 h-4 sm:w-5 sm:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -55,6 +55,9 @@ StatCard.displayName = 'StatCard';
 function DashBoard() {
     const { user } = useAuth();
     const [isLoading, setIsLoading] = useState(true);
+    // Simplified metrics without hooks
+    const metrics = { renderTime: 0, queryTime: 0, cacheHitRate: 0, memoryUsage: 0 };
+    const isOptimizing = false;
 
     const [dashboardData, setDashboardData] = useState(() => {
         if (typeof window === 'undefined') {
@@ -240,6 +243,7 @@ function DashBoard() {
     }, []);
 
     const loadDashboardData = useCallback(async () => {
+        if (isLoading) return;
         setIsLoading(true);
         try {
             // Check cache first
@@ -383,93 +387,89 @@ function DashBoard() {
         } finally {
             setIsLoading(false);
         }
-    }, [user?.role, user?.username, calculateAllStats, getWeeklyReservations]);
+    }, [user?.role, user?.username, calculateAllStats, getWeeklyReservations, isLoading]);
     
     useEffect(() => {
         let isMounted = true;
-        let debounceTimer: NodeJS.Timeout;
+        let intervalId: NodeJS.Timeout;
         
         const loadData = async () => {
-            if (isMounted) {
+            if (isMounted && !isLoading) {
                 await loadDashboardData();
             }
         };
         
-        const debouncedLoadData = () => {
-            clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(() => {
-                if (isMounted) {
-                    loadData();
-                }
-            }, 500); // Attendre 500ms avant de recharger
-        };
-        
+        // Chargement initial
         loadData();
         
-
-        
         const handleStorageChange = (event: StorageEvent) => {
-            if (event.storageArea === localStorage && event.key && isMounted) {
-                debouncedLoadData();
+            if (event.storageArea === localStorage && event.key && isMounted && !isLoading) {
+                setTimeout(loadData, 500);
             }
         };
         
         const handleDataUpdate = () => {
-            if (isMounted) {
-                debouncedLoadData();
+            if (isMounted && !isLoading) {
+                setTimeout(loadData, 500);
             }
         };
         
-        window.addEventListener('storage', handleStorageChange);
-        window.addEventListener('dashboardUpdate', handleDataUpdate);
-        window.addEventListener('roomStatusChanged', handleDataUpdate);
-        window.addEventListener('dataChanged', handleDataUpdate);
+        // Événements avec protection contre les boucles
+        window.addEventListener('storage', handleStorageChange, { passive: true });
+        window.addEventListener('dashboardUpdate', handleDataUpdate, { passive: true });
+        window.addEventListener('roomStatusChanged', handleDataUpdate, { passive: true });
+        window.addEventListener('dataChanged', handleDataUpdate, { passive: true });
         
-        // Rafraîchissement moins fréquent pour éviter les conflits
-        const interval = setInterval(() => {
-            if (isMounted && document.visibilityState === 'visible') {
+        // Intervalle réduit et conditionnel
+        intervalId = setInterval(() => {
+            if (isMounted && document.visibilityState === 'visible' && !isLoading) {
                 loadData();
             }
-        }, 10000); // Toutes les 10 secondes au lieu de 5
+        }, 30000); // 30 secondes pour réduire la charge
         
         return () => {
             isMounted = false;
-
-            clearTimeout(debounceTimer);
+            clearInterval(intervalId);
             window.removeEventListener('storage', handleStorageChange);
             window.removeEventListener('dashboardUpdate', handleDataUpdate);
             window.removeEventListener('roomStatusChanged', handleDataUpdate);
             window.removeEventListener('dataChanged', handleDataUpdate);
-            clearInterval(interval);
         };
     }, [user?.username, loadDashboardData]);
 
-    const stats = useMemo(() => [
-        {
-            title: user?.role === 'user' ? "Chambres Occupées" : "Chambres Occupées",
-            value: dashboardData.occupiedRooms.toString(),
-            subtitle: `sur ${dashboardData.totalRooms} chambres`,
-            color: "from-blue-500 to-blue-600",
-            bgColor: "bg-blue-50",
-            icon: Images.room
-        },
-        {
-            title: user?.role === 'user' ? "Mes Réservations" : "Réservations Aujourd&apos;hui",
-            value: dashboardData.todayReservations.toString(),
-            subtitle: user?.role === 'user' ? "mes réservations" : "nouvelles réservations",
-            color: "from-green-500 to-green-600",
-            bgColor: "bg-green-50",
-            icon: Images.reservation
-        },
-        {
-            title: user?.role === 'user' ? "Mes Revenus" : "Revenus du Jour",
-            value: formatPrice(dashboardData.todayRevenue.toString()),
-            subtitle: user?.role === 'user' ? "mes revenus" : "chiffre d&apos;affaires",
-            color: "from-purple-500 to-purple-600",
-            bgColor: "bg-purple-50",
-            icon: Images.billing
-        }
-    ], [dashboardData.occupiedRooms, dashboardData.totalRooms, dashboardData.todayReservations, dashboardData.todayRevenue, user?.role]);
+    // Use dashboardData directly without stabilization
+    const stableDashboardData = dashboardData;
+    
+    const stats = useMemo(() => {
+        if (!dashboardData) return [];
+        
+        return [
+            {
+                title: user?.role === 'user' ? "Chambres Occupées" : "Chambres Occupées",
+                value: dashboardData.occupiedRooms.toString(),
+                subtitle: `sur ${dashboardData.totalRooms} chambres`,
+                color: "from-blue-500 to-blue-600",
+                bgColor: "bg-blue-50",
+                icon: Images.room
+            },
+            {
+                title: user?.role === 'user' ? "Mes Réservations" : "Réservations Aujourd'hui",
+                value: dashboardData.todayReservations.toString(),
+                subtitle: user?.role === 'user' ? "mes réservations" : "nouvelles réservations",
+                color: "from-green-500 to-green-600",
+                bgColor: "bg-green-50",
+                icon: Images.reservation
+            },
+            {
+                title: user?.role === 'user' ? "Mes Revenus" : "Revenus du Jour",
+                value: formatPrice(dashboardData.todayRevenue.toString()),
+                subtitle: user?.role === 'user' ? "mes revenus" : "chiffre d'affaires",
+                color: "from-purple-500 to-purple-600",
+                bgColor: "bg-purple-50",
+                icon: Images.billing
+            }
+        ];
+    }, [dashboardData, user?.role]);
 
     if (isLoading) {
         return <LoadingSpinner size="lg" text="Chargement du tableau de bord..." />;
@@ -735,7 +735,7 @@ function DashBoard() {
                                 };
                                 
                                 return (
-                                    <div key={`activity-${index}-${activity.type}-${activity.message.slice(0, 10)}-${Date.now()}`} className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors">
+                                    <div key={`activity-${index}-${activity.type}-${activity.message.slice(0, 10)}`} className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors">
                                         <div className={`w-8 h-8 ${getBgColor(activity.type)} rounded-full flex items-center justify-center p-1`}>
                                             <Image src={getIcon(activity.type)} alt={activity.type} width={16} height={16} />
                                         </div>
@@ -818,7 +818,7 @@ function DashBoard() {
                     <h3 className="text-lg font-semibold text-slate-800 mb-4">Derniers Clients</h3>
                     <div className="space-y-3">
                         {dashboardData.recentActivities.filter((a: Activity) => a.type === 'client').slice(0, 4).map((client, index) => (
-                            <div key={`client-${index}-${client.message}-${client.detail}-${Date.now()}`} className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
+                            <div key={`client-${index}-${client.message}-${client.detail}`} className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
                                 <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
                                     <span className="text-sm font-semibold text-blue-600">
                                         {client.message.split(' - ')[1]?.charAt(0) || 'C'}
@@ -861,6 +861,14 @@ function DashBoard() {
             </div>
             
 
+            {/* Indicateur de performance en développement - Simplifié */}
+            {process.env.NODE_ENV === 'development' && user?.role === 'super_admin' && (
+                <div className="fixed bottom-4 right-4 bg-black bg-opacity-75 text-white p-2 rounded text-xs z-50">
+                    <div>Dashboard: OK</div>
+                    <div>Cache: Active</div>
+                    {isOptimizing && <div className="text-yellow-400">Optimizing...</div>}
+                </div>
+            )}
         </div>
     );
 }

@@ -25,6 +25,10 @@ import ChangePassword from "./components/ChangePassword";
 import NotificationsPage from "./components/NotificationsPage";
 import WelcomeScreen from "./components/WelcomeScreen";
 import PWAInstaller from "./components/PWAInstaller";
+import AnalyticsPage from "./components/AnalyticsPage";
+import StaffSchedulePage from "./components/StaffSchedulePage";
+import AdministrationPage from "./components/AdministrationPage";
+import PerformanceMonitor from "./components/PerformanceMonitor";
 
 /**
  * Composant principal de l'application de gestion d'hôtel
@@ -106,6 +110,12 @@ export default function App() {
                 return <PerformanceHistory />;
             case "notifications":
                 return <NotificationsPage />;
+            case "analytics":
+                return <AnalyticsPage />;
+            case "staff":
+                return <StaffSchedulePage />;
+            case "administration":
+                return <AdministrationPage />;
             default:
                 return <DashBoard />;
         }
@@ -207,16 +217,6 @@ export default function App() {
                                     <Image src={currentPage === "facturation" ? Images.billing : Images.billingActif} alt="Facturation" width={16} height={16} />
                                     Facturation
                                 </button>
-                                <button onClick={() => setCurrentPage("performance")} className={`p-2 rounded-lg transition-all duration-300 cursor-pointer relative overflow-hidden ${
-                                    currentPage === "performance" 
-                                        ? 'bg-gradient-to-r from-white/95 to-white/90 text-[#7D3837] shadow-lg border-b-2 border-amber-400 transform scale-110 backdrop-blur-sm' 
-                                        : 'text-white hover:bg-white/15 hover:text-amber-200 hover:shadow-md hover:scale-105'
-                                }`} title="Performances">
-                                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                                    </svg>
-                                    Performances
-                                </button>
                                 <div className="relative">
                                 <button onClick={() => setCurrentPage("notifications")} className={`p-2 rounded-lg transition-all duration-300 cursor-pointer relative overflow-hidden ${
                                     currentPage === "notifications" 
@@ -232,23 +232,16 @@ export default function App() {
                                 {(user?.role === 'admin' || user?.role === 'super_admin') && (
                                     <>
                                         <div className="w-px h-6 bg-white bg-opacity-30 mx-2"></div>
-                                        <button onClick={() => setCurrentPage("users")} className={`p-2 rounded-lg transition-all duration-300 cursor-pointer relative overflow-hidden ${
-                                            currentPage === "users" 
-                                                ? 'bg-gradient-to-r from-white/95 to-white/90 text-[#7D3837] shadow-lg border-b-2 border-amber-400 transform scale-110 backdrop-blur-sm' 
-                                                : 'text-white hover:bg-white/15 hover:text-amber-200 hover:shadow-md hover:scale-105'
-                                        }`} title="Utilisateurs">
-                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+                                        <button onClick={() => setCurrentPage("administration")} className={`px-4 py-4 flex items-center gap-2 transition-all duration-300 font-medium text-sm cursor-pointer relative ${
+                                            currentPage === "administration" 
+                                                ? 'bg-white text-[#7D3837] rounded-t-xl shadow-lg border-b-4 border-white -mb-1 z-10' 
+                                                : 'text-white hover:bg-white/15 hover:text-amber-200 rounded-lg'
+                                        }`}>
+                                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
                                             </svg>
-                                        </button>
-                                        <button onClick={() => setCurrentPage("history")} className={`p-2 rounded-lg transition-all duration-300 cursor-pointer relative overflow-hidden ${
-                                            currentPage === "history" 
-                                                ? 'bg-gradient-to-r from-white/95 to-white/90 text-[#7D3837] shadow-lg border-b-2 border-amber-400 transform scale-110 backdrop-blur-sm' 
-                                                : 'text-white hover:bg-white/15 hover:text-amber-200 hover:shadow-md hover:scale-105'
-                                        }`} title="Historique">
-                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                            </svg>
+                                            Administration
                                         </button>
                                     </>
                                 )}
@@ -330,12 +323,6 @@ export default function App() {
                                     <Image src={currentPage === "facturation" ? Images.billing : Images.billingActif} alt="Facturation" width={20} height={20} />
                                     Facturation
                                 </button>
-                                <button onClick={() => {setCurrentPage("performance"); setIsMobileMenuOpen(false);}} style={{backgroundColor: currentPage === "performance" ? 'white' : 'transparent', color: currentPage === "performance" ? '#7D3837' : 'white'}} className="w-full px-4 py-3 rounded-lg hover:bg-white hover:bg-opacity-20 flex items-center gap-3 transition-all duration-200 font-medium text-left cursor-pointer">
-                                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                                    </svg>
-                                    Performances
-                                </button>
                                 <div className="relative">
                                     <button onClick={() => {setCurrentPage("notifications"); setIsMobileMenuOpen(false);}} style={{backgroundColor: currentPage === "notifications" ? 'white' : 'transparent', color: currentPage === "notifications" ? '#7D3837' : 'white'}} className="w-full px-4 py-3 rounded-lg hover:bg-white hover:bg-opacity-20 flex items-center gap-3 transition-all duration-200 font-medium text-left cursor-pointer">
                                         <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -346,20 +333,13 @@ export default function App() {
                                     <span className="absolute top-2 left-8 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">3</span>
                                 </div>
                                 {user?.role === 'admin' || user?.role === 'super_admin' ? (
-                                    <>
-                                        <button onClick={() => {setCurrentPage("users"); setIsMobileMenuOpen(false);}} style={{backgroundColor: currentPage === "users" ? 'white' : 'transparent', color: currentPage === "users" ? '#7D3837' : 'white'}} className="w-full px-4 py-3 rounded-lg hover:bg-white hover:bg-opacity-20 flex items-center gap-3 transition-all duration-200 font-medium text-left cursor-pointer">
-                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
-                                            </svg>
-                                            Utilisateurs
-                                        </button>
-                                        <button onClick={() => {setCurrentPage("history"); setIsMobileMenuOpen(false);}} style={{backgroundColor: currentPage === "history" ? 'white' : 'transparent', color: currentPage === "history" ? '#7D3837' : 'white'}} className="w-full px-4 py-3 rounded-lg hover:bg-white hover:bg-opacity-20 flex items-center gap-3 transition-all duration-200 font-medium text-left cursor-pointer">
-                                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                                            </svg>
-                                            Historique
-                                        </button>
-                                    </>
+                                    <button onClick={() => {setCurrentPage("administration"); setIsMobileMenuOpen(false);}} style={{backgroundColor: currentPage === "administration" ? 'white' : 'transparent', color: currentPage === "administration" ? '#7D3837' : 'white'}} className="w-full px-4 py-3 rounded-lg hover:bg-white hover:bg-opacity-20 flex items-center gap-3 transition-all duration-200 font-medium text-left cursor-pointer">
+                                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                                        </svg>
+                                        Administration
+                                    </button>
                                 ) : null}
                                 
                                 {/* Informations utilisateur mobile */}
@@ -446,6 +426,9 @@ export default function App() {
             
             {/* Installateur PWA */}
             <PWAInstaller />
+            
+            {/* Moniteur de performance (développement uniquement) */}
+            {process.env.NODE_ENV === 'development' && <PerformanceMonitor />}
         </div>
     );
 }
