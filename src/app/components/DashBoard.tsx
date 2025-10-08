@@ -7,7 +7,7 @@ import { collection, getDocs } from "firebase/firestore";
 import { useAuth } from "../context/AuthContext";
 import LoadingSpinner from "./LoadingSpinner";
 import { dataCache } from "../utils/dataCache";
-import { useOptimizedData } from "../hooks/useOptimizedData";
+
 
 import { generateTestData, clearAllData, resetRoomsToDefault } from "../utils/generateTestData";
 
@@ -246,7 +246,7 @@ function DashBoard() {
         if (isLoading) return;
         setIsLoading(true);
         try {
-            // Check cache first
+            // Check cache first with longer TTL for production
             const cacheKey = `dashboard_${user?.username || 'all'}`;
             const cached = dataCache.get(cacheKey);
             if (cached && typeof cached === 'object') {
@@ -361,8 +361,9 @@ function DashBoard() {
             };
             
             setDashboardData(dashboardResult);
-            // Cache for 2 minutes
-            dataCache.set(cacheKey, dashboardResult, 2 * 60 * 1000);
+            // Cache for 5 minutes in production for better performance
+            const cacheTime = process.env.NODE_ENV === 'production' ? 5 * 60 * 1000 : 2 * 60 * 1000;
+            dataCache.set(cacheKey, dashboardResult, cacheTime);
         } catch (error) {
             console.warn('Error loading data:', error);
             // En cas d'erreur, utiliser les valeurs par défaut
@@ -420,12 +421,13 @@ function DashBoard() {
         window.addEventListener('roomStatusChanged', handleDataUpdate, { passive: true });
         window.addEventListener('dataChanged', handleDataUpdate, { passive: true });
         
-        // Intervalle réduit et conditionnel
+        // Intervalle adaptatif selon l'environnement
+        const intervalTime = process.env.NODE_ENV === 'production' ? 60000 : 30000; // 1 minute en prod, 30s en dev
         intervalId = setInterval(() => {
             if (isMounted && document.visibilityState === 'visible' && !isLoading) {
                 loadData();
             }
-        }, 30000); // 30 secondes pour réduire la charge
+        }, intervalTime);
         
         return () => {
             isMounted = false;
@@ -437,8 +439,8 @@ function DashBoard() {
         };
     }, [user?.username, loadDashboardData]);
 
-    // Use dashboardData directly without stabilization
-    const stableDashboardData = dashboardData;
+    // Use dashboardData directly for better performance
+    const stableDashboardData = useMemo(() => dashboardData, [dashboardData]);
     
     const stats = useMemo(() => {
         if (!dashboardData) return [];
