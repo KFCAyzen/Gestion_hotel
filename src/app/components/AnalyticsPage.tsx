@@ -75,7 +75,7 @@ const AnalyticsPage = () => {
         } finally {
             setLoading(false);
         }
-    }, [selectedPeriod, calculateAnalytics]);
+    }, [selectedPeriod]);
 
     const calculateAnalytics = useCallback((billing: any[], reservations: any[], rooms: any[]): AnalyticsData => {
         const now = new Date();
