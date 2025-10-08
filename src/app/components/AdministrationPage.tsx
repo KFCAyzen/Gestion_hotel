@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, memo } from 'react';
+import { useState, memo, useEffect } from 'react';
 import UserManagement from './UserManagement';
 import AnalyticsPage from './AnalyticsPage';
 import { useAuth } from '../context/AuthContext';
@@ -9,29 +9,76 @@ const AdministrationPage = () => {
     const [activeSection, setActiveSection] = useState('overview');
     const { user } = useAuth();
     
-    // Données simplifiées pour petit établissement
-    const getSimpleStats = () => {
-        const rooms = JSON.parse(localStorage.getItem('rooms') || '[]');
-        const bills = JSON.parse(localStorage.getItem('bills') || '[]');
-        const clients = JSON.parse(localStorage.getItem('clients') || '[]');
-        
-        const occupiedRooms = rooms.filter((r: any) => r.status === 'Occupée').length;
-        const totalRooms = rooms.length || 27;
-        const todayRevenue = bills
-            .filter((b: any) => b.date === new Date().toISOString().split('T')[0])
-            .reduce((sum: number, b: any) => sum + (parseInt(b.amount) || 0), 0);
+    // Cache des statistiques pour éviter les recalculs
+    const [stats, setStats] = useState(() => {
+        try {
+            const rooms = JSON.parse(localStorage.getItem('rooms') || '[]');
+            const bills = JSON.parse(localStorage.getItem('bills') || '[]');
+            const clients = JSON.parse(localStorage.getItem('clients') || '[]');
             
-        return {
-            activeUsers: 1,
-            todayActions: bills.length + clients.length,
-            occupiedRooms,
-            totalRooms,
-            todayRevenue,
-            systemStatus: 'Opérationnel'
+            const occupiedRooms = rooms.filter((r: any) => r.status === 'Occupée').length;
+            const totalRooms = rooms.length || 27;
+            const today = new Date().toISOString().split('T')[0];
+            const todayRevenue = bills
+                .filter((b: any) => b.date === today)
+                .reduce((sum: number, b: any) => sum + (parseInt(b.amount) || 0), 0);
+                
+            return {
+                activeUsers: 1,
+                todayActions: bills.length + clients.length,
+                occupiedRooms,
+                totalRooms,
+                todayRevenue,
+                systemStatus: 'Opérationnel'
+            };
+        } catch {
+            return {
+                activeUsers: 1,
+                todayActions: 0,
+                occupiedRooms: 0,
+                totalRooms: 27,
+                todayRevenue: 0,
+                systemStatus: 'Opérationnel'
+            };
+        }
+    });
+
+    // Actualiser les stats seulement si nécessaire
+    useEffect(() => {
+        const handleStorageChange = () => {
+            try {
+                const rooms = JSON.parse(localStorage.getItem('rooms') || '[]');
+                const bills = JSON.parse(localStorage.getItem('bills') || '[]');
+                const clients = JSON.parse(localStorage.getItem('clients') || '[]');
+                
+                const occupiedRooms = rooms.filter((r: any) => r.status === 'Occupée').length;
+                const totalRooms = rooms.length || 27;
+                const today = new Date().toISOString().split('T')[0];
+                const todayRevenue = bills
+                    .filter((b: any) => b.date === today)
+                    .reduce((sum: number, b: any) => sum + (parseInt(b.amount) || 0), 0);
+                    
+                setStats({
+                    activeUsers: 1,
+                    todayActions: bills.length + clients.length,
+                    occupiedRooms,
+                    totalRooms,
+                    todayRevenue,
+                    systemStatus: 'Opérationnel'
+                });
+            } catch {
+                // Ignorer les erreurs
+            }
         };
-    };
-    
-    const stats = getSimpleStats();
+        
+        window.addEventListener('storage', handleStorageChange);
+        window.addEventListener('dataChanged', handleStorageChange);
+        
+        return () => {
+            window.removeEventListener('storage', handleStorageChange);
+            window.removeEventListener('dataChanged', handleStorageChange);
+        };
+    }, []);
 
     const renderSection = () => {
         switch (activeSection) {

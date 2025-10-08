@@ -255,38 +255,49 @@ function DashBoard() {
                 return;
             }
 
-            // Load data with optimized queries
+            // Priorité localStorage pour éviter Firebase
             let rooms = JSON.parse(localStorage.getItem('rooms') || '[]');
             let clients = JSON.parse(localStorage.getItem('clients') || '[]');
             let bills = JSON.parse(localStorage.getItem('bills') || '[]');
             let reservations = JSON.parse(localStorage.getItem('reservations') || '[]');
             
-            // Si localStorage est vide, charger depuis Firebase
-            if (rooms.length === 0) {
-                const roomsSnapshot = await getDocs(collection(db, "rooms"));
-                const allRooms = roomsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Room[];
-                const roomMap = new Map();
-                allRooms.forEach(room => {
-                    if (!roomMap.has(room.number)) {
-                        roomMap.set(room.number, room);
+            // Charger depuis Firebase seulement si localStorage est complètement vide
+            const hasLocalData = rooms.length > 0 || clients.length > 0 || bills.length > 0;
+            
+            if (!hasLocalData) {
+                try {
+                    const [roomsSnapshot, clientsSnapshot, billsSnapshot, reservationsSnapshot] = await Promise.all([
+                        getDocs(collection(db, "rooms")),
+                        getDocs(collection(db, "clients")),
+                        getDocs(collection(db, "bills")),
+                        getDocs(collection(db, "reservations"))
+                    ]);
+                    
+                    if (rooms.length === 0) {
+                        const allRooms = roomsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })) as Room[];
+                        const roomMap = new Map();
+                        allRooms.forEach(room => {
+                            if (!roomMap.has(room.number)) {
+                                roomMap.set(room.number, room);
+                            }
+                        });
+                        rooms = Array.from(roomMap.values());
                     }
-                });
-                rooms = Array.from(roomMap.values());
-            }
-            
-            if (clients.length === 0) {
-                const clientsSnapshot = await getDocs(collection(db, "clients"));
-                clients = clientsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            }
-            
-            if (bills.length === 0) {
-                const billsSnapshot = await getDocs(collection(db, "bills"));
-                bills = billsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            }
-            
-            if (reservations.length === 0) {
-                const reservationsSnapshot = await getDocs(collection(db, "reservations"));
-                reservations = reservationsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    
+                    if (clients.length === 0) {
+                        clients = clientsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    }
+                    
+                    if (bills.length === 0) {
+                        bills = billsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    }
+                    
+                    if (reservations.length === 0) {
+                        reservations = reservationsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+                    }
+                } catch (firebaseError) {
+                    console.warn('Firebase unavailable, using localStorage only');
+                }
             }
             
             if (user?.role === 'user') {
@@ -361,8 +372,8 @@ function DashBoard() {
             };
             
             setDashboardData(dashboardResult);
-            // Cache for 5 minutes in production for better performance
-            const cacheTime = process.env.NODE_ENV === 'production' ? 5 * 60 * 1000 : 2 * 60 * 1000;
+            // Cache plus long pour éviter les rechargements
+            const cacheTime = process.env.NODE_ENV === 'production' ? 10 * 60 * 1000 : 5 * 60 * 1000;
             dataCache.set(cacheKey, dashboardResult, cacheTime);
         } catch (error) {
             console.warn('Error loading data:', error);
@@ -421,8 +432,8 @@ function DashBoard() {
         window.addEventListener('roomStatusChanged', handleDataUpdate, { passive: true });
         window.addEventListener('dataChanged', handleDataUpdate, { passive: true });
         
-        // Intervalle adaptatif selon l'environnement
-        const intervalTime = process.env.NODE_ENV === 'production' ? 60000 : 30000; // 1 minute en prod, 30s en dev
+        // Intervalle plus long pour réduire la charge
+        const intervalTime = process.env.NODE_ENV === 'production' ? 120000 : 60000; // 2 minutes en prod, 1 minute en dev
         intervalId = setInterval(() => {
             if (isMounted && document.visibilityState === 'visible' && !isLoading) {
                 loadData();
