@@ -59,6 +59,11 @@ function DashBoard() {
     const metrics = { renderTime: 0, queryTime: 0, cacheHitRate: 0, memoryUsage: 0 };
     const isOptimizing = false;
 
+    // Set loading to false after component mounts
+    useEffect(() => {
+        setIsLoading(false);
+    }, []);
+
     const [dashboardData, setDashboardData] = useState(() => {
         if (typeof window === 'undefined') {
             return {
