@@ -255,7 +255,7 @@ const AnalyticsPage = () => {
                             <span className="text-green-600 text-xl">💰</span>
                         </div>
                     </div>
-                    <p className="text-xs text-slate-500 mt-2">+{analyticsData.occupancy.trend > 0 ? '+' : ''}{analyticsData.occupancy.trend.toFixed(1)}% vs mois dernier</p>
+                    <p className="text-xs text-slate-500 mt-2">+{stableAnalyticsData.occupancy.trend > 0 ? '+' : ''}{stableAnalyticsData.occupancy.trend.toFixed(1)}% vs mois dernier</p>
                 </div>
 
                 <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
@@ -270,7 +270,7 @@ const AnalyticsPage = () => {
                             <span className="text-blue-600 text-xl">🏨</span>
                         </div>
                     </div>
-                    <p className="text-xs text-slate-500 mt-2">Moyenne: {analyticsData.occupancy.average.toFixed(1)}%</p>
+                    <p className="text-xs text-slate-500 mt-2">Moyenne: {stableAnalyticsData.occupancy.average.toFixed(1)}%</p>
                 </div>
 
                 <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
@@ -278,14 +278,14 @@ const AnalyticsPage = () => {
                         <div>
                             <p className="text-sm text-slate-600">Total clients</p>
                             <p className="text-2xl font-bold text-purple-600">
-                                {analyticsData.clients.total}
+                                {stableAnalyticsData.clients.total}
                             </p>
                         </div>
                         <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
                             <span className="text-purple-600 text-xl">👥</span>
                         </div>
                     </div>
-                    <p className="text-xs text-slate-500 mt-2">{analyticsData.clients.new} nouveaux clients</p>
+                    <p className="text-xs text-slate-500 mt-2">{stableAnalyticsData.clients.new} nouveaux clients</p>
                 </div>
 
                 <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
@@ -293,7 +293,7 @@ const AnalyticsPage = () => {
                         <div>
                             <p className="text-sm text-slate-600">Séjour moyen</p>
                             <p className="text-2xl font-bold text-orange-600">
-                                {analyticsData.rooms.avgStay} jours
+                                {stableAnalyticsData.rooms.avgStay} jours
                             </p>
                         </div>
                         <div className="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
@@ -310,13 +310,13 @@ const AnalyticsPage = () => {
                 <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
                     <h3 className="text-lg font-semibold text-slate-800 mb-4">Évolution des Revenus</h3>
                     <div className="space-y-3">
-                        {analyticsData.monthlyData.slice(-6).map((data, index) => (
+                        {stableAnalyticsData.monthlyData.slice(-6).map((data, index) => (
                             <div key={`revenue-${data.month}-${index}`} className="flex items-center gap-3">
                                 <div className="w-8 text-xs text-slate-600">{data.month}</div>
                                 <div className="flex-1 bg-slate-200 rounded-full h-3">
                                     <div 
                                         className="bg-gradient-to-r from-green-500 to-green-600 h-3 rounded-full"
-                                        style={{width: `${Math.min((data.revenue / Math.max(...analyticsData.monthlyData.map(d => d.revenue))) * 100, 100)}%`}}
+                                        style={{width: `${Math.min((data.revenue / Math.max(...stableAnalyticsData.monthlyData.map(d => d.revenue))) * 100, 100)}%`}}
                                     ></div>
                                 </div>
                                 <div className="text-xs text-slate-700 font-medium w-20 text-right">
@@ -331,13 +331,13 @@ const AnalyticsPage = () => {
                 <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
                     <h3 className="text-lg font-semibold text-slate-800 mb-4">Réservations par Mois</h3>
                     <div className="space-y-3">
-                        {analyticsData.monthlyData.slice(-6).map((data, index) => (
+                        {stableAnalyticsData.monthlyData.slice(-6).map((data, index) => (
                             <div key={`bookings-${data.month}-${index}`} className="flex items-center gap-3">
                                 <div className="w-8 text-xs text-slate-600">{data.month}</div>
                                 <div className="flex-1 bg-slate-200 rounded-full h-3">
                                     <div 
                                         className="bg-gradient-to-r from-blue-500 to-blue-600 h-3 rounded-full"
-                                        style={{width: `${Math.min((data.bookings / Math.max(...analyticsData.monthlyData.map(d => d.bookings))) * 100, 100)}%`}}
+                                        style={{width: `${Math.min((data.bookings / Math.max(...stableAnalyticsData.monthlyData.map(d => d.bookings))) * 100, 100)}%`}}
                                     ></div>
                                 </div>
                                 <div className="text-xs text-slate-700 font-medium w-12 text-right">
