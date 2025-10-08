@@ -55,60 +55,29 @@ const AnalyticsPage = () => {
         };
         loadData();
         return () => { isMounted = false; };
-    }, [selectedPeriod]);
+    }, [selectedPeriod, fetchAnalyticsData]);
 
     const fetchAnalyticsData = useCallback(async () => {
         setLoading(true);
         try {
-            // Vérifier le cache d'abord
-            const cacheKey = `analytics_${selectedPeriod}`;
-            const cached = smartCache.get<AnalyticsData>(cacheKey);
-            if (cached) {
-                setAnalyticsData(cached);
-                setLoading(false);
-                return;
-            }
-
-            // Charger depuis localStorage d'abord (plus rapide)
-            let rooms = JSON.parse(localStorage.getItem('rooms') || '[]');
-            let reservations = JSON.parse(localStorage.getItem('reservations') || '[]');
-            let bills = JSON.parse(localStorage.getItem('bills') || '[]');
-            let clients = JSON.parse(localStorage.getItem('clients') || '[]');
-
-            // Si pas de données locales, charger depuis Firebase
-            if (rooms.length === 0 || reservations.length === 0 || bills.length === 0) {
-                const [roomsSnapshot, reservationsSnapshot, billingSnapshot] = await Promise.all([
-                    getDocs(collection(db, 'rooms')),
-                    getDocs(collection(db, 'reservations')),
-                    getDocs(collection(db, 'bills'))
-                ]);
-
-                rooms = roomsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                reservations = reservationsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-                bills = billingSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-            }
-
-            // Optimiser les données avec le web worker
-            const rawData = { rooms, reservations, bills, clients };
-            const analytics = await optimizeData(rawData, 'analytics') as AnalyticsData || calculateAnalytics(bills, reservations, rooms);
-            
-            // Mettre en cache
-            smartCache.set(cacheKey, analytics, 10 * 60 * 1000); // 10 minutes
-            setAnalyticsData(analytics);
-        } catch (error) {
-            console.error('Erreur lors du chargement des analytics:', error);
-            // Fallback avec données locales
+            // Charger depuis localStorage
             const rooms = JSON.parse(localStorage.getItem('rooms') || '[]');
             const reservations = JSON.parse(localStorage.getItem('reservations') || '[]');
             const bills = JSON.parse(localStorage.getItem('bills') || '[]');
+            
             const analytics = calculateAnalytics(bills, reservations, rooms);
+            setAnalyticsData(analytics);
+        } catch (error) {
+            console.error('Erreur lors du chargement des analytics:', error);
+            // Fallback avec données vides
+            const analytics = calculateAnalytics([], [], []);
             setAnalyticsData(analytics);
         } finally {
             setLoading(false);
         }
-    }, [selectedPeriod, smartCache, optimizeData, calculateAnalytics]);
+    }, [selectedPeriod, calculateAnalytics]);
 
-    const calculateAnalytics = (billing: any[], reservations: any[], rooms: any[]): AnalyticsData => {
+    const calculateAnalytics = useCallback((billing: any[], reservations: any[], rooms: any[]): AnalyticsData => {
         const now = new Date();
         const today = now.toISOString().split('T')[0];
         const currentMonth = now.getMonth();
@@ -238,7 +207,7 @@ const AnalyticsPage = () => {
             },
             monthlyData
         };
-    };
+    }, []);
 
     const formatPrice = (amount: number) => {
         return new Intl.NumberFormat('fr-FR', {
