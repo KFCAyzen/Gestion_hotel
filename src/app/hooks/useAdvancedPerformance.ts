@@ -260,7 +260,7 @@ export const useAdvancedPerformance = (componentName: string) => {
     }, [smartCache]);
 
     // Mise à jour des métriques avec protection contre les boucles infinies
-    const updateMetricsRef = useRef<(newMetrics: Partial<PerformanceMetrics>) => void>();
+    const updateMetricsRef = useRef<(newMetrics: Partial<PerformanceMetrics>) => void>(() => {});
     
     updateMetricsRef.current = (newMetrics: Partial<PerformanceMetrics>) => {
         setMetrics(prev => {
