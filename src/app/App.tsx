@@ -24,6 +24,7 @@ import CheckoutAlertModal from "./components/CheckoutAlertModal";
 import ChangePassword from "./components/ChangePassword";
 import NotificationsPage from "./components/NotificationsPage";
 import WelcomeScreen from "./components/WelcomeScreen";
+import PWAInstaller from "./components/PWAInstaller";
 
 /**
  * Composant principal de l'application de gestion d'hôtel
@@ -442,6 +443,9 @@ export default function App() {
                     setShowCheckoutAlert(true);
                 }} />
             )}
+            
+            {/* Installateur PWA */}
+            <PWAInstaller />
         </div>
     );
 }
