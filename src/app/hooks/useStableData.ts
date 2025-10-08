@@ -25,7 +25,7 @@ export const useDebounceCallback = <T extends (...args: any[]) => any>(
     delay: number,
     deps: React.DependencyList
 ): T => {
-    const timeoutRef = useRef<NodeJS.Timeout>();
+    const timeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
     
     return useMemo(() => {
         return ((...args: Parameters<T>) => {
