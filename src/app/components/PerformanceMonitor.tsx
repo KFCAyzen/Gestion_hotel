@@ -26,7 +26,7 @@ const PerformanceMonitor = () => {
             const cacheStats = cacheUtils.getGlobalStats();
             const queryReport = dbIndexing.getQueryPerformanceReport();
 
-            setPerformanceData(prev => {
+            setPerformanceData((prev: any) => {
                 const newData = {
                     ...report,
                     cacheStats,
