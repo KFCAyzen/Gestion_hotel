@@ -191,11 +191,11 @@ const AnalyticsPage = () => {
                     const checkIn = new Date(r.checkIn);
                     return checkIn >= new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
                 }).length,
-                returning: reservations.length - reservations.filter((r: any) => {
+                returning: Math.max(0, reservations.length - reservations.filter((r: any) => {
                     if (!r.checkIn) return false;
                     const checkIn = new Date(r.checkIn);
                     return checkIn >= new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-                }).length
+                }).length)
             },
             rooms: {
                 mostBooked,
@@ -226,16 +226,24 @@ const AnalyticsPage = () => {
         <div className="p-4 sm:p-6 space-y-6">
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <h1 className="text-2xl font-bold text-slate-800">Rapports & Analytics</h1>
-                <select 
-                    value={selectedPeriod}
-                    onChange={(e) => setSelectedPeriod(e.target.value)}
-                    className="px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                >
-                    <option value="daily">Aujourd'hui</option>
-                    <option value="weekly">Cette semaine</option>
-                    <option value="monthly">Ce mois</option>
-                    <option value="yearly">Cette année</option>
-                </select>
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={fetchAnalyticsData}
+                        className="px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-700 rounded-lg transition-colors text-sm"
+                    >
+                        Actualiser
+                    </button>
+                    <select 
+                        value={selectedPeriod}
+                        onChange={(e) => setSelectedPeriod(e.target.value)}
+                        className="px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500"
+                    >
+                        <option value="daily">Aujourd'hui</option>
+                        <option value="weekly">Cette semaine</option>
+                        <option value="monthly">Ce mois</option>
+                        <option value="yearly">Cette année</option>
+                    </select>
+                </div>
             </div>
 
             {/* KPIs principaux */}
@@ -243,9 +251,19 @@ const AnalyticsPage = () => {
                 <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
                     <div className="flex items-center justify-between">
                         <div>
-                            <p className="text-sm text-slate-600">Revenus du mois</p>
+                            <p className="text-sm text-slate-600">
+                                {selectedPeriod === 'daily' ? 'Revenus du jour' :
+                                 selectedPeriod === 'weekly' ? 'Revenus de la semaine' :
+                                 selectedPeriod === 'yearly' ? 'Revenus de l\'année' :
+                                 'Revenus du mois'}
+                            </p>
                             <p className="text-2xl font-bold text-green-600">
-                                {formatPrice(analyticsData?.revenue?.monthly || 0)}
+                                {formatPrice(
+                                    selectedPeriod === 'daily' ? (analyticsData?.revenue?.daily || 0) :
+                                    selectedPeriod === 'weekly' ? (analyticsData?.revenue?.weekly || 0) :
+                                    selectedPeriod === 'yearly' ? (analyticsData?.revenue?.yearly || 0) :
+                                    (analyticsData?.revenue?.monthly || 0)
+                                )}
                             </p>
                         </div>
                         <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
@@ -254,7 +272,9 @@ const AnalyticsPage = () => {
                             </svg>
                         </div>
                     </div>
-                    <p className="text-xs text-slate-500 mt-2">{(analyticsData?.occupancy?.trend || 0) > 0 ? '+' : ''}{(analyticsData?.occupancy?.trend || 0).toFixed(1)}% vs mois dernier</p>
+                    <p className="text-xs text-slate-500 mt-2">
+                        {(analyticsData?.occupancy?.trend || 0) > 0 ? '+' : ''}{(analyticsData?.occupancy?.trend || 0).toFixed(1)}% vs période précédente
+                    </p>
                 </div>
 
                 <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
@@ -288,7 +308,9 @@ const AnalyticsPage = () => {
                             </svg>
                         </div>
                     </div>
-                    <p className="text-xs text-slate-500 mt-2">{analyticsData?.clients?.new || 0} nouveaux clients</p>
+                    <p className="text-xs text-slate-500 mt-2">
+                        {analyticsData?.clients?.new || 0} nouveaux • {analyticsData?.clients?.returning || 0} fidèles
+                    </p>
                 </div>
 
                 <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
@@ -305,7 +327,9 @@ const AnalyticsPage = () => {
                             </svg>
                         </div>
                     </div>
-                    <p className="text-xs text-slate-500 mt-2">Durée moyenne de séjour</p>
+                    <p className="text-xs text-slate-500 mt-2">
+                        Plus réservée: {analyticsData?.rooms?.mostBooked || 'N/A'}
+                    </p>
                 </div>
             </div>
 
