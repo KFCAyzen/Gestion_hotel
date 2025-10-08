@@ -55,7 +55,7 @@ const AnalyticsPage = () => {
         };
         loadData();
         return () => { isMounted = false; };
-    }, [selectedPeriod, fetchAnalyticsData]);
+    }, [selectedPeriod]);
 
     const fetchAnalyticsData = useCallback(async () => {
         setLoading(true);
